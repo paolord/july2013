@@ -1,0 +1,285 @@
+<!--
+
+	HTML5 Canvas Pong
+    by Chichiwiya >.<
+    
+    email: chichiwiya[at]gmail.com
+
+-->
+<!DOCTYPE HTML>
+<html>
+<head>
+<title>HTML5 Canvas Pong</title>
+<script type="text/javascript">
+	var canvas = null;
+	var context2D = null;	
+	var FPS = 100;
+	var ball = new Image();
+	var ballx = 0;
+	var bally = 0;	
+	var dirballx = 0;
+	var dirbally = 0;
+	var ballxspeed = 2;
+	var ballyspeed = 2;
+	var pad1 = new Image();
+	var pad1x = 0;
+	var pad1y = 0;
+	var pad1dir = 0;
+	
+	var pad2 = new Image();
+	var pad2x = 0;
+	var pad2y = 0;
+	var pad2dir = 0;
+	
+	var gameStart = false;
+	
+	var score1 = 0;
+	var score2 = 0;
+	var goal = 5;
+	var winner = 0;
+	
+	var padspeed = 2;
+	function Init(){
+		ball.src = "images/ball.png";
+		canvas = document.getElementById("screen");	
+		context2D = canvas.getContext('2d');
+		
+		pad1 = new Image();
+		pad1.src = "images/paddle.png";
+				
+		pad2 = new Image();
+		pad2.src = "images/paddle.png";
+		
+		Set();
+		
+		setInterval(Run,1000/this.FPS);
+		window.addEventListener('keydown',KeyDown,false);
+		window.addEventListener('keyup',KeyUp,false);	
+	}
+	function Set()
+	{
+		score1 = 0;
+		score2 = 0;
+		winner = 0;
+		ResetPosition();
+	}
+	function Restart()
+	{
+		Set();
+	}
+	function ResetPosition()
+	{
+		ballx = Math.floor(canvas.width/2) - Math.floor(ball.width/2);
+		bally = Math.floor(canvas.height/2) - Math.floor(ball.height/2);
+		dirballx = (Math.floor(Math.random()*2))==1?1:-1;
+		dirbally = (Math.floor(Math.random()*2))==1?1:-1;
+		
+		pad1y = canvas.height/2;
+		pad1x = 20;
+		pad1dir = 0;
+		pad2y = canvas.height/2;
+		pad2x = canvas.width-(pad2.width+20);
+		pad2dir = 0;
+		gameStart = false;
+	}
+	function PrintText(text,x,y)
+	{
+		context2D.font="14px Verdana";
+		context2D.fillStyle = "white";
+		context2D.fillText(text,x,y);
+	}
+	function KeyDown()
+	{
+		if(event==null)
+		{
+			keyCode = window.event.keyCode;
+			window.event.preventDefault();
+		}
+		else
+		{
+			keyCode = event.keyCode;
+			event.preventDefault();
+		}
+		if(gameStart==true)
+		{
+			switch(keyCode)
+			{
+			case 38:
+				pad2dir = -1;
+				break;
+			case 40: 
+				pad2dir = 1;
+				break;
+			case 87: 
+				pad1dir = -1;
+				break;
+			case 83: 
+				pad1dir = 1;
+				break;
+			
+			}
+		}
+		else
+		{
+			switch(keyCode)
+			{
+			case 32:
+				if(winner>0)
+				{
+					Restart();
+				}
+				else
+				gameStart=true;
+				break;
+			}
+		}
+	}
+	function KeyUp()
+	{
+		if(event==null)
+		{
+			keyCode = window.event.keyCode;
+			window.event.preventDefault();
+		}
+		else
+		{
+			keyCode = event.keyCode;
+			event.preventDefault();
+		}
+
+		switch(keyCode)
+		{
+		case 38:
+			pad2dir = 0;
+			break;
+		case 40: 
+			pad2dir = 0;
+			break;
+		case 87: 
+			pad1dir = 0;
+			break;
+		case 83: 
+			pad1dir = 0;
+			break;
+		}
+	}
+	function Draw()
+	{	
+		context2D.clearRect(0, 0, canvas.width, canvas.height);
+		context2D.drawImage(ball, ballx, bally);
+		context2D.drawImage(pad1, pad1x, pad1y);
+		context2D.drawImage(pad2, pad2x, pad2y);
+		
+		PrintText(score1+" : "+score2, canvas.width/2 - 15, 20);
+		if(gameStart==false&&winner==0)
+		{
+			PrintText("Press \"Spacebar\" to Start", (canvas.width/2)-90, canvas.height-20);
+		}
+		if(winner!=0)
+		{
+			PrintText("Player "+winner+" wins!", (canvas.width/2)-50, canvas.height-20);
+		}
+	}
+	function Update()
+	{
+				
+		if(gameStart==true)
+		{
+			if(pad1y>=(canvas.height-pad1.height)&&pad1dir==1)
+			{
+				pad1dir = 0;
+			}
+			else if(pad1y<=0&&pad1dir==-1)
+			{
+				pad1y = 0;
+			}
+			if(pad2y>=(canvas.height-pad2.height)&&pad2dir==1)
+			{
+				pad2dir = 0;
+			}
+			else if(pad2y<=0&&pad2dir==-1)
+			{
+				pad2y = 0;
+			}
+			pad1y += (padspeed*pad1dir);
+			pad2y += (padspeed*pad2dir);
+			
+			ballx+= (ballxspeed*dirballx);
+			bally+= (ballyspeed*dirbally);
+			
+			CollisionCheck();
+			
+			if(ballx<=0)
+			{
+				ResetPosition();
+				score2++;
+				if(score2==goal)
+				{
+					winner = 2;
+				}
+			}
+			else if(ballx>canvas.width-ball.width)
+			{
+				ResetPosition();
+				score1++;
+				
+				if(score1==goal)
+				{
+					winner = 1;
+				}
+			}
+			if(bally<=0)
+			{
+				dirbally = 1;
+			}
+			else if(bally>canvas.height-ball.height)
+			{
+				dirbally = -1;
+			}
+		}	
+	}
+	function CollisionCheck()
+	{
+		if(dirballx==-1)
+		{
+			if(ballx <= (pad1.width+pad1x) && (bally >= pad1y-(ball.height-1) && bally <= (pad1y+pad1.height)-1 ))
+			{
+				dirballx = 1;
+			}
+		}
+		else if(dirballx==1)
+		{
+			if(ballx+ball.width >= pad2x && (bally >= pad2y-(ball.height-1) && bally <= (pad2y+pad2.height)-1 ))
+			{
+				dirballx = -1;
+			}
+		}
+	}
+	function Run(){
+		Update();
+		Draw();
+		
+	}
+</script>
+<style type="text/css">
+
+#main {
+	width: 800px;
+	margin: 0 auto;
+	font-family:Verdana, Geneva, sans-serif;
+	font-size:12px;
+	text-align:center;
+}
+#screen {
+	background-color: #000;
+}
+</style>
+</head>
+
+<body onLoad="Init();">
+	<div id="main">
+		<canvas id="screen" width="800" height="400">Putik! Warang Canvas!</canvas>
+        <p>Player 1 Controls: W/S<br />Player 2 Controls: Up/Down<br />5 points to win.</p>
+	</div>
+</body>
+</html>
